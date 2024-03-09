@@ -12,14 +12,13 @@ const PORT = process.env.PORT || 5432;
 
 app.get("/send-emails", upload.single("csv-file"), (req, res) => {
   const { email, password, subject, body } = req.body;
-
   let domain = email.match(/@gmail\.com$/);
-  console.log(domain);
-  if (!domain[0] === "@gmail.com") return;
-  // return;
+  if (domain === null) {
+    return res.status(404).json({ message: "Only Gmail Allowed" });
+  }
   try {
     const transporter = nodemailer.createTransport({
-      host: process.env.SMTP_HOST,
+      host: "smtp.gmail.com",
       port: 465,
       secure: true,
       auth: {
@@ -28,9 +27,9 @@ app.get("/send-emails", upload.single("csv-file"), (req, res) => {
       },
     });
     const message = {
-      from: `${process.env.SENDER_EMAIL}`,
-      subject: "Say Hello Akash(CTO)!!🐙",
-      html: { path: "./email.html" },
+      from: `${email}`,
+      subject: `${subject}`,
+      text: `${body}`,
     };
     fs.createReadStream("uploads/clients.csv")
       .pipe(csv())
