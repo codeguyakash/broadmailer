@@ -10,6 +10,19 @@ This is a broadcast email server built with Node.js. It allows you to send email
 - Logging of sent emails
 - Error handling and reporting
 
+## end points
+
+formData = {
+email:"example@gmail.com",
+password:"XYZ",
+subject:"example",
+body:"example",
+csv-file:"clients.csv"
+
+}
+
+- /send-emails/{formData}
+
 ## Installation
 
 1. Clone the repository: `git clone https://github.com/codeguyakash/broadmailer.git`
@@ -35,6 +48,7 @@ This is a broadcast email server built with Node.js. It allows you to send email
      "html": "<b>Hello world?</b>"
    }
    ```
+
 # More Help
 
 You can ping me on Twitter - <a href="https://twitter.com/codeguyakash">@codeguyakash</a>
