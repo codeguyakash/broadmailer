@@ -3,19 +3,35 @@ const nodemailer = require("nodemailer");
 const csv = require("csv-parser");
 const fs = require("fs");
 const dotenv = require("dotenv");
+const os = require("os");
 const { upload } = require("./middleware/multer");
 dotenv.config();
 
 const app = express();
+const numCPUs = os.cpus().length;
 
 const PORT = process.env.PORT || 5432;
-
-app.get("/send-emails", upload.single("csv-file"), (req, res) => {
+app.get("/", (_, res) => {
+  return res.json({
+    numberCPUs: `(${numCPUs})Core CPUs`,
+    projectName: "Email Broadcast",
+  });
+});
+app.post("/send-emails", upload.single("csv-file"), (req, res) => {
   const { email, password, subject, body } = req.body;
+
   let domain = email.match(/@gmail\.com$/);
+
+  console.log(req.body);
+
+  if ([email, password, subject, body].some((field) => field?.trim() === "")) {
+    return res.status(404).json({ message: "Fields Required" });
+  }
+
   if (domain === null) {
     return res.status(404).json({ message: "Only Gmail Allowed" });
   }
+  // return res.status(404).json({ message: "End" });
   try {
     const transporter = nodemailer.createTransport({
       host: "smtp.gmail.com",
@@ -44,7 +60,7 @@ app.get("/send-emails", upload.single("csv-file"), (req, res) => {
             console.log(`Email sent: ${info.response}`);
             res
               .status(200)
-              .send({ message: "Email Sent Success.", info: info.response });
+              .send({ message: "Email Sent Success.", info: info });
           }
         });
       })
