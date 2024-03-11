@@ -4,34 +4,60 @@ const csv = require("csv-parser");
 const fs = require("fs");
 const dotenv = require("dotenv");
 const os = require("os");
+const cookieParser = require("cookie-parser");
+const bodyParser = require("body-parser");
 const { upload } = require("./middleware/multer");
+const cors = require("cors");
+
 dotenv.config();
 
 const app = express();
+
+app.use(cors());
+app.use(cookieParser());
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: true }));
 const numCPUs = os.cpus().length;
 
 const PORT = process.env.PORT || 5432;
+// ----------------get route-----------------------------------
 app.get("/", (_, res) => {
-  return res.json({
+  return res.send({
     numberCPUs: `(${numCPUs})Core CPUs`,
     projectName: "Email Broadcast",
   });
 });
-app.post("/send-emails", upload.single("csv-file"), (req, res) => {
-  const { email, password, subject, body } = req.body;
 
+// ----------------post route-----------------------------------
+app.get("count", (req, res) => {
+  console.log();
+  return res.send("Ok");
+});
+
+let emailCount = 0;
+app.post("/send-emails", upload.single("file"), (req, res) => {
+  const { email, password, subject, body } = req.body;
+  const cookies = req.cookies.userEmailId;
+  if (emailCount >= 10) return res.send({ response: "limit end" });
+
+  // console.log(cookies);
+  console.log(req.body);
+  if (cookies === email) {
+    return res.status(400).send({ message: "Email cookie already exists" });
+    emailCount++;
+  }
+
+  console.log(emailCount);
   let domain = email.match(/@gmail\.com$/);
 
-  console.log(req.body);
-
   if ([email, password, subject, body].some((field) => field?.trim() === "")) {
-    return res.status(404).json({ message: "Fields Required" });
+    return res.status(404).send({ message: "Fields Required" });
   }
 
   if (domain === null) {
-    return res.status(404).json({ message: "Only Gmail Allowed" });
+    return res.status(404).send({ message: "Only Gmail Allowed" });
   }
-  // return res.status(404).json({ message: "End" });
+
   try {
     const transporter = nodemailer.createTransport({
       host: "smtp.gmail.com",
@@ -59,8 +85,9 @@ app.post("/send-emails", upload.single("csv-file"), (req, res) => {
           } else {
             console.log(`Email sent: ${info.response}`);
             res
-              .status(200)
-              .send({ message: "Email Sent Success.", info: info });
+              .status(201)
+              .send({ message: "Email Sent Success.", info: info.response });
+            res.cookie("myCookie", "cookieValue").send("Cookie is set");
           }
         });
       })
