@@ -26,17 +26,15 @@ app.get("/", (_, res) => {
     projectName: "Email Broadcast",
   });
 });
-
 app.post("/send-emails", upload.single("file"), (req, res) => {
   const { email, password, subject, body } = req.body;
   const file = req?.file;
   const filePath = req?.file?.path;
-  // if (emailCount >= 10) return res.send({ response: "limit end" });
 
-  if (!email && !password && !subject && !body) {
+  if (!(email && password && subject && body)) {
     return res.status(404).send({ message: "Fields Required" });
   }
-  let domain = email.match(/@gmail\.com$/);
+  let domain = email?.match(/@gmail\.com$/);
   if (!filePath) {
     return res.status(404).send({ message: "File Required" });
   }
@@ -84,10 +82,10 @@ app.post("/send-emails", upload.single("file"), (req, res) => {
             if (error) {
               res.status(error?.responseCode).json(error);
             } else {
-              console.log(`Email sent: ${info.response}`);
+              console.log(`Email sent: ${info}`);
               res
-                .status(201)
-                .send({ message: "Email Sent Success.", info: info.response });
+                .status(202)
+                .send({ message: "Email Sent Success.", info: info });
             }
           } catch (error) {
             console.log(error.message);
@@ -96,7 +94,6 @@ app.post("/send-emails", upload.single("file"), (req, res) => {
       })
       .on("end", () => {
         console.log("Send Process Done...");
-        // emailCount++;
       });
   } catch (error) {
     res.status(500).json(error);
