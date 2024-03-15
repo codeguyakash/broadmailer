@@ -31,7 +31,7 @@ app.post("/send-emails", upload.single("file"), (req, res) => {
   const { email, password, subject, body } = req.body;
   const file = req?.file;
   const filePath = req?.file?.path;
-  if (emailCount >= 10) return res.send({ response: "limit end" });
+  // if (emailCount >= 10) return res.send({ response: "limit end" });
 
   if (!email && !password && !subject && !body) {
     return res.status(404).send({ message: "Fields Required" });
@@ -96,7 +96,7 @@ app.post("/send-emails", upload.single("file"), (req, res) => {
       })
       .on("end", () => {
         console.log("Send Process Done...");
-        emailCount++;
+        // emailCount++;
       });
   } catch (error) {
     res.status(500).json(error);
