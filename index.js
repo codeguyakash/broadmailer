@@ -1,26 +1,27 @@
 const express = require("express");
-const nodemailer = require("nodemailer");
-const csv = require("csv-parser");
-const fs = require("fs");
 const dotenv = require("dotenv");
+const nodemailer = require("nodemailer");
 const os = require("os");
+const fs = require("fs");
 const cookieParser = require("cookie-parser");
+const csv = require("csv-parser");
+const cors = require("cors");
 const bodyParser = require("body-parser");
 const { upload } = require("./middleware/multer");
-const cors = require("cors");
+const { google } = require("googleapis");
+const OAuth2 = google.auth.OAuth2;
 
 dotenv.config();
-
 const app = express();
 
 app.use(cors());
 app.use(cookieParser());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
+
 const numCPUs = os.cpus().length;
 
 const PORT = process.env.PORT || 5432;
-// ----------------get route-----------------------------------
 app.get("/", (_, res) => {
   return res.send({
     numberCPUs: `(${numCPUs})Core CPUs`,
@@ -28,36 +29,39 @@ app.get("/", (_, res) => {
   });
 });
 
-// ----------------post route-----------------------------------
-app.get("count", (req, res) => {
-  console.log();
-  return res.send("Ok");
-});
-
-let emailCount = 0;
 app.post("/send-emails", upload.single("file"), (req, res) => {
   const { email, password, subject, body } = req.body;
-  const cookies = req.cookies.userEmailId;
+  const file = req?.file;
+  const filePath = req?.file?.path;
   if (emailCount >= 10) return res.send({ response: "limit end" });
 
-  // console.log(cookies);
-  console.log(req.body);
-  if (cookies === email) {
-    return res.status(400).send({ message: "Email cookie already exists" });
-    emailCount++;
-  }
-
-  console.log(emailCount);
-  let domain = email.match(/@gmail\.com$/);
-
-  if ([email, password, subject, body].some((field) => field?.trim() === "")) {
+  if (!email && !password && !subject && !body) {
     return res.status(404).send({ message: "Fields Required" });
   }
-
-  if (domain === null) {
+  let domain = email.match(/@gmail\.com$/);
+  if (!filePath) {
+    return res.status(404).send({ message: "File Required" });
+  }
+  if (!(file?.mimetype === "text/csv")) {
+    return res.status(404).send({ message: "only CSV File Allowed" });
+  }
+  if (!domain) {
     return res.status(404).send({ message: "Only Gmail Allowed" });
   }
 
+  // fs.readFile("uploads/clients.csv", "utf8", (err, data) => {
+  //   if (err) {
+  //     console.error(err);
+  //     console.log("step-1-done");
+  //     return;
+  //   }
+  //   const updatedContent = content + data;
+  //   fs.writeFile("uploads/clients.csv", updatedContent, (error, result) => {
+  //     error ? console.log(error) : console.log(result);
+  //   });
+  //   console.log("step-2-done");
+  //   return;
+  // });
   try {
     const transporter = nodemailer.createTransport({
       host: "smtp.gmail.com",
@@ -76,27 +80,28 @@ app.post("/send-emails", upload.single("file"), (req, res) => {
     fs.createReadStream("uploads/clients.csv")
       .pipe(csv())
       .on("data", (row) => {
-        console.log(row.email);
         message.to = row.email;
         transporter.sendMail(message, (error, info) => {
-          if (error) {
-            console.log(`Error sending email to ${message.to}: ${error}`);
-            res.status(500).json({ message: "Something went wrong" });
-          } else {
-            console.log(`Email sent: ${info.response}`);
-            res
-              .status(201)
-              .send({ message: "Email Sent Success.", info: info.response });
-            res.cookie("myCookie", "cookieValue").send("Cookie is set");
+          try {
+            if (error) {
+              res.status(error?.responseCode).json(error);
+            } else {
+              console.log(`Email sent: ${info.response}`);
+              res
+                .status(201)
+                .send({ message: "Email Sent Success.", info: info.response });
+            }
+          } catch (error) {
+            console.log(error.message);
           }
         });
       })
       .on("end", () => {
-        console.log("Email Sent Success.");
+        console.log("Send Process Done...");
+        emailCount++;
       });
   } catch (error) {
-    console.error("Error:", error);
-    res.status(500).json({ message: "Something went wrong" });
+    res.status(500).json(error);
   }
 });
 
