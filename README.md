@@ -13,12 +13,16 @@ This is a broadcast email server built with Node.js. It allows you to send email
 ## end points
 
 formData = {
+<br/>
 email:"example@gmail.com",
+<br/>
 password:"XYZ",
+<br/>
 subject:"example",
+<br/>
 body:"example",
-csv-file:"clients.csv"
-
+<br/>
+file:"clients.csv"
 }
 
 - /send-emails/{formData}
