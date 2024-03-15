@@ -8,8 +8,6 @@ const csv = require("csv-parser");
 const cors = require("cors");
 const bodyParser = require("body-parser");
 const { upload } = require("./middleware/multer");
-const { google } = require("googleapis");
-const OAuth2 = google.auth.OAuth2;
 
 dotenv.config();
 const app = express();
@@ -106,5 +104,5 @@ app.post("/send-emails", upload.single("file"), (req, res) => {
 });
 
 app.listen(PORT, () => {
-  console.log(`Server is running on port http://localhost:${PORT}`);
+  console.log(`🎉🎉 Server: http://localhost:${PORT}`);
 });
