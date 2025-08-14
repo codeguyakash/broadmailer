@@ -19,6 +19,11 @@ app.use(bodyParser.urlencoded({ extended: true }));
 
 const numCPUs = os.cpus().length;
 
+(async () => {
+  const { ping } = await import('keepalive-server');
+  ping(60000, 'https://broadmailer.onrender.com');
+})();
+
 if (cluster.isPrimary) {
   console.log(`Primary Server PID:- ${process.pid} is running`);
 
