@@ -21,7 +21,7 @@ const numCPUs = os.cpus().length;
 
 (async () => {
   const { ping } = await import('keepalive-server');
-  ping(60000, 'https://broadmailer.onrender.com');
+  ping(86400000, 'https://broadmailer.onrender.com');
 })();
 
 if (cluster.isPrimary) {
